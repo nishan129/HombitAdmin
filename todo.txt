@@ -1,0 +1,28 @@
+1) reusable form desing like(newproduct,updateproduct has same form use) similarly other(category,subcategory,banner)
+2) reusable Input field and button 
+3) admin authentication
+4) helper function like (api call)
+5) loading optimization 
+6) reusable table 
+
+7)  paggination
+8)  filter searching
+9)  groth chart
+10) image review
+11) yup or zod for form state managmenet
+
+
+
+i wrote all controller acording to previously provide clodinary utils so this is not good that update the cloudinary ultils i think i create separete cloudinary untils for multi image upload this is good idea or not 
+
+
+
+
+SHADCN UI
+1) Alert
+2) Aspect ratio
+3) carousel
+4) chart
+5) command search
+6) dialog
+7) form

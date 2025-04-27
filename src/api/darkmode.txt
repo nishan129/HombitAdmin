@@ -1,0 +1,29 @@
+import React, { useState, useEffect } from 'react';
+
+export default function ThemeToggle() {
+    const [theme, setTheme] = useState('light');
+
+    useEffect(() => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) {
+            document.documentElement.classList.toggle('dark', storedTheme === 'dark');
+            setTheme(storedTheme);
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        document.documentElement.classList.toggle('dark', newTheme === 'dark');
+        localStorage.setItem('theme', newTheme);
+    };
+
+    return (
+        <button
+            onClick={toggleTheme}
+            className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-white text-black rounded"
+        >
+            {theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+        </button>
+    );
+}

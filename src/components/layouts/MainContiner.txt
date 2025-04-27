@@ -1,0 +1,111 @@
+import React, { useEffect, useState } from "react";
+import Header from "../navigation/Header";
+import { Outlet } from "react-router-dom";
+import SideNav from "../navigation/SideNav";
+import { useAxiosPrivate } from "@/hooks/useAxiosPrivate";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addNotification,
+  disconnectSocket,
+  setNotifications,
+  setSocket,
+} from "@/features/socket/socketSlice";
+import { setUser } from "@/features/auth/authSlice";
+import { host } from "@/api/config";
+import { io } from "socket.io-client";
+
+const socketUrl = host;
+export default function MainContainer() {
+  const [showSidebar, setShowSidebar] = useState(true);
+  const axiosPrivate = useAxiosPrivate();
+  const dispatch = useDispatch();
+  const auth = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user); // Get user from Redux state
+  const socket = useSelector((state) => state.socket.socket); // Get socket from Redux state
+
+  // Fetch current user and notifications from backend when the component mounts
+  useEffect(() => {
+    const fetchUserAndNotifications = async () => {
+      try {
+        // Fetch current user
+        const userResponse = await axiosPrivate.get(
+          "/api/v1/users/auth/current-user"
+        );
+        dispatch(setUser(userResponse.data.data)); // Set user in Redux
+        console.log(userResponse);
+        // Fetch notifications
+        const notificationsResponse = await axiosPrivate.get(
+          "/api/v1/orders/notifications"
+        );
+        dispatch(setNotifications(notificationsResponse.data.data)); // Set notifications in Redux
+        console.log(notificationsResponse);
+      } catch (error) {
+        console.log("Error while fetching user or notifications:", error);
+      }
+    };
+    console.log(auth);
+    if (auth.accessToken) {
+      console.log(auth.accessToken);
+      fetchUserAndNotifications();
+    }
+  }, [dispatch, axiosPrivate]);
+
+  // Establish socket connection after the user is fetched
+  // useEffect(() => {
+  //   if (user && !socket) {
+  //     // Establish socket connection after user data is available and if socket is not already connected
+  //     const socketConnection = io(socketUrl, {
+  //       transports: ["websocket"],
+  //       query: { userId: user._id, role: user.role }, // Sending user data in the query
+  //     });
+
+  //     // Emit userConnected event when the user is connected
+  //     socketConnection.emit("userConnected", {
+  //       userId: user._id,
+  //       role: user.role,
+  //     });
+
+  //     // Dispatch the socket object to Redux to make it accessible globally
+  //     dispatch(setSocket(socketConnection));
+
+  //     // Listen for incoming notifications
+  //     socketConnection.on("receiveOrderNotification", (notification) => {
+  //       dispatch(addNotification(notification)); // Dispatch the notification to Redux store
+  //     });
+
+  //     // Clean up socket connection on component unmount
+  //     return () => {
+  //       socketConnection.disconnect();
+  //       dispatch(disconnectSocket());
+  //     };
+  //   }
+  // }, [user, dispatch, socket]);
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Sidebar with transition */}
+      <div
+        className={`fixed top-0 h-screen bg-slate-50 z-10 overflow-y-auto transform transition-transform duration-300 ease-in-out
+        ${showSidebar ? "left-0 w-[270px]" : "left-[-270px]"}`}
+      >
+        <SideNav showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+      </div>
+
+      {/* Header */}
+      <div
+        className={`transition-all duration-300 bg-slate-800 ease-in-out px-5 py-2
+        ${showSidebar ? "lg:ml-[270px] " : "lg:ml-0"}`}
+      >
+        <Header showSidebar={showSidebar} setShowSidebar={setShowSidebar} />
+      </div>
+
+      {/* Main Content Area */}
+      <div
+        className={`flex-1 transition-all duration-300 ease-in-out px-5 py-2 overflow-y-auto
+        ${showSidebar ? "lg:ml-[270px]" : "lg:ml-0 "}`}
+      >
+        <Outlet />
+      </div>
+    </div>
+  );
+}
