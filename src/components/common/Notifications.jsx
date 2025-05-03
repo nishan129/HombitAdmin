@@ -72,9 +72,7 @@ export default function Notifications() {
                       <p className="px-1 text-xs text-white bg-green-700 rounded-full">{orderStatus}</p>
                       <p className="text-xs">{formatDate(createdAt)}</p>
                     </div>
-                    <p className="text-xs">
-                      <span className="text-green-900">₹{amount.toFixed(2)}</span> ({orderItems.length} x Items)
-                    </p>
+            
                   </div>
                   <button
                     onClick={(e) => handleRemoveNotification(e, _id)}
