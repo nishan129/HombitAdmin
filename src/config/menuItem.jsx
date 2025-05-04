@@ -16,7 +16,7 @@ import Schemes from "@/pages/dashbord/products/schemes/Schemes";
 // import NewSubCategory from "@/pages/dashbord/subcategories/NewSubCategory";
 // import SubCategories from "@/pages/dashbord/subcategories/SubCategories";
 // import SubCategoryPageOutlet from "@/pages/dashbord/subcategories/SubCategoryPageOutlet";
-import Units from "@/pages/dashbord/units/Units";
+import Units from "@/pages/dashbord/maids/Maids";
 import {
   Boxes,
   LayoutGrid,
