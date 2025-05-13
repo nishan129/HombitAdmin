@@ -28,25 +28,51 @@ export default function ProductTable() {
   const navigate = useNavigate();
 
   // Fetch products on mount
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axiosPrivate.get("/api/v1/products");
-        if (response.data.success) {
-          setProducts(response.data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        const { message } = getErrorMessage(error);
-        toast.error(message || "Failed to fetch products");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const [paginationInfo, setPaginationInfo] = useState({
+  totalProducts: 0,
+  page: 1,
+  limit: 10, // Or whatever your default is
+});
 
-    fetchProducts();
-  }, [axiosPrivate]);
+// Fetch products on mount
+useEffect(() => {
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      // If your API supports pagination, you'd pass page and limit here
+      // const response = await axiosPrivate.get(`/api/v1/products?page=${paginationInfo.page}&limit=${paginationInfo.limit}`);
+      const response = await axiosPrivate.get("/api/v1/products"); // Assuming default fetch for now
+
+      if (response.data.success && response.data.data) {
+        if (Array.isArray(response.data.data.products)) {
+          setProducts(response.data.data.products);
+          setPaginationInfo({
+            totalProducts: response.data.data.totalProducts,
+            page: response.data.data.page,
+            limit: response.data.data.limit,
+          });
+        } else {
+          console.error("Fetched data.products is not an array:", response.data.data.products);
+          setProducts([]); // Fallback to an empty array
+          toast.error("Received invalid product data from server.");
+        }
+      } else {
+         toast.error("Failed to fetch products or no data received.");
+         setProducts([]); // Fallback
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      const { message } = getErrorMessage(error);
+      toast.error(message || "Failed to fetch products");
+      setProducts([]); // Fallback in case of error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchProducts();
+  // Add paginationInfo.page and paginationInfo.limit to dependencies if you implement page changes
+}, [axiosPrivate]);
 
   // Handle product deletion
   const handleDelete = async (productId) => {
