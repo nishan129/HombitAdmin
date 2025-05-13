@@ -41,67 +41,95 @@ export default function NewProduct() {
   };
 
   const handleSchemeChange = (e) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      schemes: [{ ...prev.schemes[0], [id]: value }],
-    }));
-  };
+  const { id, value } = e.target;
+  let processedValue = value;
+
+  // Convert to number if the field is expected to be numeric
+  if (id === "durationTime" || id === "price" || id === "discountPrice") {
+    // Use parseFloat to allow for decimal prices, or parseInt if only whole numbers are expected.
+    // Handle empty string case to avoid NaN if user clears the input, defaulting to 0 or an empty string based on your preference for state.
+    // If you want to allow empty input to clear to 0, use:
+    processedValue = value === "" ? 0 : parseFloat(value);
+    // If you prefer to keep it as an empty string until submit (and convert on submit),
+    // then you'd convert on submit. But for type consistency in state, converting here is good.
+    // Let's go with parseFloat and default to 0 if empty or invalid.
+    const numValue = parseFloat(value);
+    processedValue = isNaN(numValue) ? 0 : numValue; // Or handle NaN differently if needed
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    schemes: [{ ...prev.schemes[0], [id]: processedValue }],
+  }));
+};
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+  e.preventDefault();
+  setIsLoading(true);
 
-    const data = {
-      title: formData.title,
-      description: formData.description,
-      category: formData.category,
-      includes: formData.includes.split(",").filter((item) => item.trim()),
-      excludes: formData.excludes.split(",").filter((item) => item.trim()),
-      isActive: formData.isActive,
-      schemes: formData.schemes,
-    };
+  // Create a deep copy of schemes to modify
+  const processedSchemes = formData.schemes.map(scheme => ({
+    ...scheme,
+    durationTime: parseFloat(scheme.durationTime) || 0, // Ensure it's a number, default to 0 if parsing fails
+    price: parseFloat(scheme.price) || 0,
+    discountPrice: parseFloat(scheme.discountPrice) || 0,
+    // timeAvailable is already a string, so no change needed
+  }));
 
-    console.log("Form Data before submission:", formData);
-    console.log("Sending request to:", createProduct);
-    console.log("Request data:", data);
-
-    if (!data.category || data.category === "") {
-      toast.error("Please select a category");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!data.schemes || data.schemes.length === 0 || !data.schemes[0].durationTime || !data.schemes[0].price || !data.schemes[0].discountPrice) {
-      toast.error("Please fill in all scheme details (durationTime, price, discountPrice)");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const response = await axiosPrivate.post(createProduct, data, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if (response.data.success) {
-        toast.success(response.data.message);
-        setFormData({
-          title: "",
-          description: "",
-          category: "",
-          includes: "",
-          excludes: "",
-          isActive: false,
-          schemes: [{ durationTime: 0, price: 0, discountPrice: 0, timeAvailable: "" }],
-        });
-      }
-    } catch (error) {
-      console.error("Error while creating service:", error);
-      const { message } = getErrorMessage(error);
-      toast.error(message || "Server error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+  const data = {
+    title: formData.title,
+    description: formData.description,
+    category: formData.category,
+    includes: formData.includes.split(",").map(item => item.trim()).filter(item => item), // Use map to trim before filter
+    excludes: formData.excludes.split(",").map(item => item.trim()).filter(item => item), // Use map to trim before filter
+    isActive: formData.isActive,
+    schemes: processedSchemes, // Use the processed schemes
   };
+
+  console.log("Form Data before submission (raw):", formData); // Keep this for debugging raw state
+  console.log("Sending request to:", createProduct);
+  console.log("Request data (processed):", data); // Log the data being sent
+
+  if (!data.category || data.category === "") {
+    toast.error("Please select a category");
+    setIsLoading(false);
+    return;
+  }
+
+  // Client-side validation for scheme numbers (after conversion)
+  if (!data.schemes || data.schemes.length === 0 ||
+      data.schemes[0].durationTime == null || data.schemes[0].durationTime < 0 || // Check for null/undefined and negative
+      data.schemes[0].price == null || data.schemes[0].price < 0 ||
+      data.schemes[0].discountPrice == null || data.schemes[0].discountPrice < 0) {
+    toast.error("Please fill in all scheme details (durationTime, price, discountPrice) with valid non-negative numbers.");
+    setIsLoading(false);
+    return;
+  }
+  // ... rest of your handleSubmit function
+  try {
+    const response = await axiosPrivate.post(createProduct, data, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (response.data.success) {
+      toast.success(response.data.message);
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        includes: "",
+        excludes: "",
+        isActive: false,
+        schemes: [{ durationTime: 0, price: 0, discountPrice: 0, timeAvailable: "" }],
+      });
+    }
+  } catch (error) {
+    console.error("Error while creating service:", error);
+    const { message } = getErrorMessage(error); // Ensure getErrorMessage can handle Axios errors
+    toast.error(message || "Server error occurred. Please check console.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div>
