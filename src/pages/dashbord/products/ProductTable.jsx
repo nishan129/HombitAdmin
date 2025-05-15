@@ -44,8 +44,8 @@ useEffect(() => {
       const response = await axiosPrivate.get("/api/v1/products"); // Assuming default fetch for now
 
       if (response.data.success && response.data.data) {
-        if (Array.isArray(response.data.data.products)) {
-          setProducts(response.data.data.products);
+        if (Array.isArray(response.data.data)) {
+          setProducts(response.data.data);
           setPaginationInfo({
             totalProducts: response.data.data.totalProducts,
             page: response.data.data.page,
